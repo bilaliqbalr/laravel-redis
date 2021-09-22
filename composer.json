@@ -1,12 +1,12 @@
 {
-    "name": "bilaliqbalr/laravel-redis-auth",
+    "name": "bilaliqbalr/laravel-redis",
     "description": "This package will provide redis based laravel auth driver",
     "keywords": [
         "bilaliqbalr",
         "laravel",
         "laravel-redis-auth"
     ],
-    "homepage": "https://github.com/bilaliqbalr/laravel-redis-auth",
+    "homepage": "https://github.com/bilaliqbalr/laravel-redis",
     "license": "MIT",
     "authors": [
         {
