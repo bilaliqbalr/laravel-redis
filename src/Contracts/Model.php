@@ -7,7 +7,7 @@ interface Model
 {
     public function prefix();
 
-    public static function getColumnKey(...$arguments);
+    public function getColumnKey(...$arguments);
 
     public function getNextId();
 }

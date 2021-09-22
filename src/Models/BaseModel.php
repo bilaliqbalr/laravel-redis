@@ -17,7 +17,7 @@ class BaseModel implements ModelContract
         HidesAttributes,
         GuardsAttributes;
 
-    public const ID_KEY = "%i";
+    public const ID_KEY = "{model}:%d";
 
     private $attributes = [];
 

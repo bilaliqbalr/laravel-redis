@@ -14,11 +14,11 @@ trait BaseModel
      * @param mixed ...$arguments
      * @return string
      */
-    public static function getColumnKey(...$arguments)
+    public function getColumnKey(...$arguments)
     {
         $key = array_shift($arguments);
 
-        return sprintf($key, ...$arguments);
+        return sprintf(str_replace(['{model}:'], [$this->prefix()], $key), ...$arguments);
     }
 
     /**
