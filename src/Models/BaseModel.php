@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Str;
 
 class BaseModel implements ModelContract
 {
@@ -83,24 +82,32 @@ class BaseModel implements ModelContract
 
     public function create($attributes)
     {
+        $allFields = $this->getFillable() + $this->getHidden() + $this->getGuarded();
+
+        // fill all attributes
+        $attributes = collect($allFields)->unique()->mapWithKeys(function ($field) use ($attributes) {
+            return [$field => $attributes[$field] ?? null];
+        })->toArray();
+
         $attributes = $this->fill($attributes)->getAttributes();
 
         $newId = $this->getNextId();
         $attributes['id'] = $newId;
 
+        // Creating searchable fields
         if (!empty($this->searchBy)) {
             foreach ($this->searchBy as $field => $format) {
                 // Adding fields to make them searchable
                 $this->redis->set(
-                    $this->getColumnKey($format, $attributes[$field]),
+                    $this->getColumnKey($this->prefix() . $format, $attributes[$field]),
                     $newId
                 );
             }
         }
 
-        // Saving user info
+        // Saving model info
         $this->redis->hmset(
-            $this->getColumnKey(self::ID_KEY, $newId),
+            $this->getColumnKey($this::ID_KEY, $newId),
             $attributes
         );
 

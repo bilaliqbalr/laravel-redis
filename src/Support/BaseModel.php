@@ -18,7 +18,7 @@ trait BaseModel
     {
         $key = array_shift($arguments);
 
-        return sprintf($key, $arguments);
+        return sprintf($key, ...$arguments);
     }
 
     /**
@@ -28,7 +28,7 @@ trait BaseModel
      */
     public function prefix()
     {
-        return Str::snake(get_class($this)) . ':';
+        return Str::snake(class_basename($this)) . ':';
     }
 
     /**
@@ -38,7 +38,7 @@ trait BaseModel
      */
     public function getNextId()
     {
-        $totalRecordsKey = 'total_' . $this->prefix();
+        $totalRecordsKey = 'total_' . rtrim($this->prefix(), ':');
 
         if ( ! Redis::connection($this->connection)->exists($totalRecordsKey)) {
             Redis::connection($this->connection)->set($totalRecordsKey, 0);

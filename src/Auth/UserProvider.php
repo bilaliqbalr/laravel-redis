@@ -12,7 +12,7 @@ use \Bilaliqbalr\LaravelRedis\Models\User;
 class UserProvider implements AuthUserProvider
 {
     /**
-     * @var Application|mixed
+     * @var User
      */
     private $user;
 
@@ -25,14 +25,14 @@ class UserProvider implements AuthUserProvider
     {
         $userData = $this->user->getUserById($identifier);
 
-        return empty($userData) ? null : new User($this->user->getUserData());
+        return empty($userData) ? null : new User($this->user->getAttributes());
     }
 
     public function retrieveByToken($identifier, $token)
     {
-        $userData = $this->user->getUserByAuthToken($token);
+        $userData = $this->user->getByApiToken($token);
 
-        return is_array($userData) ? new User($this->user->getUserData()) : null;
+        return is_array($userData) ? new User($this->user->getAttributes()) : null;
     }
 
     public function updateRememberToken(Authenticatable $user, $token)
@@ -57,7 +57,7 @@ class UserProvider implements AuthUserProvider
             return null;
         }
 
-        return new User($this->user->getUserData());
+        return new User($this->user->getAttributes());
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)

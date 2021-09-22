@@ -3,6 +3,7 @@
 namespace Bilaliqbalr\LaravelRedis\Models;
 
 
+use Bilaliqbalr\LaravelRedis\Support\Auth;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -10,14 +11,21 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Foundation\Auth\Access\Authorizable;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class User extends BaseModel implements
     AuthenticatableContract,
     AuthorizableContract,
     CanResetPasswordContract
 {
-    use Authenticatable, Authorizable, CanResetPassword, MustVerifyEmail;
+    use Authenticatable,
+        Authorizable,
+        CanResetPassword,
+        MustVerifyEmail,
+        Auth;
 
+    public const ID_KEY = "user:%d";
     public const EMAIL_KEY = "email:%s";
     public const API_KEY = "api_token:%s";
 
@@ -59,17 +67,11 @@ class User extends BaseModel implements
         return new static($userData);
     }
 
-    public function getByApiToken($apiToken)
+    public function create($attributes)
     {
-        $apiToken = $apiToken === false ? request()->bearerToken() : $apiToken;
+        $attributes['api_token'] = Str::random(60);
+        $attributes['password'] = Hash::make($attributes['password']);
 
-        if (empty($apiToken)) {
-            return false;
-        }
-
-        return once(function () use ($apiToken) {
-            $userId = $this->redis->get($this->getColumnKey(self::API_KEY, $apiToken));
-            return $this->getById($userId);
-        });
+        return parent::create($attributes);
     }
 }

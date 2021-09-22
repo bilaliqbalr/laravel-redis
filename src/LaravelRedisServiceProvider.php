@@ -18,17 +18,17 @@ class LaravelRedisServiceProvider extends PackageServiceProvider
     {
         $package
             ->name($this->name)
-            ->hasConfigFile()
+            ->hasConfigFile($this->name)
             ->hasCommand(LaravelRedisCommand::class);
 
         // Registering redis custom guard
-        Auth::viaRequest($this->getConfig('guard'), function (Request $request) {
-            return app(User::class)->getUserByAuthToken();
-        });
+//        Auth::viaRequest($this->getConfig('guard'), function (Request $request) {
+//            return app(User::class)->getUserByAuthToken();
+//        });
 
         // Registering redis custom user provider
         Auth::provider($this->getConfig('provider'), function ($app, array $config) {
-            return new UserProvider();
+            return new $config['model']();
         });
     }
 
