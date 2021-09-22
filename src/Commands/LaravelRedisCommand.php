@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Bilaliqbalr\LaravelRedis\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class LaravelRedisCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-redis';
 
     public $description = 'My command';
 
