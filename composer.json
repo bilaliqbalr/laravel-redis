@@ -4,7 +4,7 @@
     "keywords": [
         "bilaliqbalr",
         "laravel",
-        "laravel-redis-auth"
+        "laravel-redis"
     ],
     "homepage": "https://github.com/bilaliqbalr/laravel-redis",
     "license": "MIT",

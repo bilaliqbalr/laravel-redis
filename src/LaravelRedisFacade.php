@@ -11,6 +11,6 @@ class LaravelRedisFacade extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'laravel-redis-auth';
+        return 'laravel-redis';
     }
 }

@@ -37,7 +37,7 @@ class BaseModel implements ModelContract
      */
     public function __construct(array $attributes = [])
     {
-        $this->redis = Redis::connection(config('laravel-redis-auth.connection'));
+        $this->redis = Redis::connection(config('laravel-redis.connection'));
 
         $this->fill($attributes);
     }
