@@ -86,7 +86,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
             foreach ($this->searchBy as $field => $format) {
                 // Adding fields to make them searchable
                 $this->redis->set(
-                    $this->getColumnKey($this->prefix() . $format, $attributes[$field]),
+                    $this->getColumnKey($format, $attributes[$field]),
                     $newId
                 );
             }

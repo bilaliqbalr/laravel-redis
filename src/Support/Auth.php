@@ -6,6 +6,7 @@ namespace Bilaliqbalr\LaravelRedis\Support;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 trait Auth
 {
@@ -39,10 +40,9 @@ trait Auth
     public function login($email, $password)
     {
         if ( ! self::isEmailExists($email)) {
-            return [
-                'status' => false,
-                'error' => 'Invalid email'
-            ];
+            throw ValidationException::withMessages([
+                'email' => [trans('passwords.user')],
+            ]);
         }
 
         $userId = Redis::get($this->getColumnKey(self::EMAIL_KEY, $email));
@@ -67,10 +67,9 @@ trait Auth
 
         } else {
             // Invalid login details
-            return [
-                'status' => false,
-                'error' => 'Invalid login details provided'
-            ];
+            throw ValidationException::withMessages([
+                'email' => [trans('auth.failed')],
+            ]);
         }
     }
 

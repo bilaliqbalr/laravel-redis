@@ -25,8 +25,8 @@ class User extends BaseModel implements
         MustVerifyEmail,
         Auth;
 
-    public const EMAIL_KEY = "email:%s";
-    public const API_KEY = "api_token:%s";
+    public const EMAIL_KEY = "{model}:email:%s";
+    public const API_KEY = "{model}:api_token:%s";
 
     /**
      * The attributes that are mass assignable.
