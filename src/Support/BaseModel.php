@@ -3,12 +3,22 @@
 namespace Bilaliqbalr\LaravelRedis\Support;
 
 
+use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
+use Illuminate\Database\Eloquent\Concerns\HasAttributes;
+use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
-trait BaseModel
+class BaseModel
 {
+    use HasAttributes,
+        HidesAttributes,
+        GuardsAttributes,
+        HasRelation;
+
     protected $connection;
+
+    protected $primaryKey = "id";
 
     /**
      * @param mixed ...$arguments
@@ -46,4 +56,43 @@ trait BaseModel
 
         return Redis::connection($this->connection)->incr($totalRecordsKey);
     }
+
+    /**
+     * Get the primary key.
+     *
+     * @return string
+     */
+    public function getKeyName()
+    {
+        return $this->primaryKey;
+    }
+
+    /**
+     * Qualify the given column name by the model's table.
+     *
+     * @param  string  $column
+     * @return string
+     */
+    public function qualifyColumn($column)
+    {
+        if (Str::contains($column, ':')) {
+            return $column;
+        }
+
+        return $this->prefix().':'.$column;
+    }
+
+    /**
+     * Qualify the given columns with the model's table.
+     *
+     * @param  array  $columns
+     * @return array
+     */
+    public function qualifyColumns($columns)
+    {
+        return collect($columns)->map(function ($column) {
+            return $this->qualifyColumn($column);
+        })->all();
+    }
+
 }

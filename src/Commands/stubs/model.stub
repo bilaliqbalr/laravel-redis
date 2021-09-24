@@ -1,0 +1,10 @@
+<?php
+
+namespace DummyNamespace;
+
+use Bilaliqbalr\LaravelRedis\Models\BaseModel;
+
+class DummyClass extends BaseModel
+{
+
+}

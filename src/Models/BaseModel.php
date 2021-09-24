@@ -4,22 +4,14 @@ namespace Bilaliqbalr\LaravelRedis\Models;
 
 
 use Bilaliqbalr\LaravelRedis\Contracts\Model as ModelContract;
-use Bilaliqbalr\LaravelRedis\Support\BaseModel as BaseModelTrait;
-use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
-use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
+use Bilaliqbalr\LaravelRedis\Support\BaseModel as RedisBaseModel;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
 
-class BaseModel implements ModelContract
+class BaseModel extends RedisBaseModel implements ModelContract
 {
-    use BaseModelTrait,
-        HidesAttributes,
-        GuardsAttributes;
-
     public const ID_KEY = "{model}:%d";
-
-    private $attributes = [];
 
     protected $searchBy = [];
 
@@ -75,11 +67,6 @@ class BaseModel implements ModelContract
         $this->attributes[$key] = $value;
     }
 
-    public function getAttributes() : array
-    {
-        return $this->attributes;
-    }
-
     public function create($attributes)
     {
         $allFields = $this->getFillable() + $this->getHidden() + $this->getGuarded();
@@ -92,7 +79,7 @@ class BaseModel implements ModelContract
         $attributes = $this->fill($attributes)->getAttributes();
 
         $newId = $this->getNextId();
-        $attributes['id'] = $newId;
+        $attributes[$this->getKeyName()] = $newId;
 
         // Creating searchable fields
         if (!empty($this->searchBy)) {

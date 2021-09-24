@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Bilaliqbalr\LaravelRedis\Commands\LaravelRedisCommand;
+use Bilaliqbalr\LaravelRedis\Commands\LaravelRedisMakeCommand;
 
 class LaravelRedisServiceProvider extends PackageServiceProvider
 {
@@ -19,7 +19,7 @@ class LaravelRedisServiceProvider extends PackageServiceProvider
         $package
             ->name($this->name)
             ->hasConfigFile($this->name)
-            ->hasCommand(LaravelRedisCommand::class);
+            ->hasCommand(LaravelRedisMakeCommand::class);
 
         // Registering redis custom guard
 //        Auth::viaRequest($this->getConfig('guard'), function (Request $request) {
