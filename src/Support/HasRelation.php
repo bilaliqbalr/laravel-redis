@@ -51,12 +51,17 @@ trait HasRelation
     public function hasMany($related, $foreignKey = null, $localKey = null)
     {
         $this->related = app($related);
-        // add key {current}-id-rel-{related}-id
 
         $foreignKey = $foreignKey ?: $this->getForeignKey();
 
         $localKey = $localKey ?: $this->getKeyName();
 
-        dd($localKey, $foreignKey);
+        $id = $this->{$localKey};
+
+        $foreignPrefix = rtrim($this->related->qualifyColumn(""), ':');
+        $relationKey = "{$this->qualifyColumn($id)}:rel:{$foreignPrefix}";
+
+        // Creating relation
+        $this->redis->sadd($relationKey, $this->related->{$foreignKey});
     }
 }

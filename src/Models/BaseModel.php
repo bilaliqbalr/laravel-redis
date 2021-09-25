@@ -118,7 +118,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
     protected function save()
     {
         $this->redis->hmset(
-            $this->getColumnKey($this::ID_KEY, $this->getAttribute($this->getKeyName())),
+            $this->getColumnKey($this::ID_KEY, $this->{$this->getKeyName()}),
             $this->attributes
         );
     }

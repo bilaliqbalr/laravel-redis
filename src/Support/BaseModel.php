@@ -66,7 +66,7 @@ class BaseModel
      */
     public function getNextId()
     {
-        $totalRecordsKey = 'total_' . rtrim($this->prefix(), ':');
+        $totalRecordsKey = 'total_' . Str::plural(rtrim($this->prefix(), ':'));
 
         if ( ! Redis::connection($this->connection)->exists($totalRecordsKey)) {
             Redis::connection($this->connection)->set($totalRecordsKey, 0);
@@ -97,7 +97,7 @@ class BaseModel
             return $column;
         }
 
-        return $this->prefix().':'.$column;
+        return $this->prefix().$column;
     }
 
     /**
