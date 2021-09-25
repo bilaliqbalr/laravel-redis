@@ -5,6 +5,7 @@ namespace Bilaliqbalr\LaravelRedis\Support;
 
 use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
 use Illuminate\Database\Eloquent\Concerns\HasAttributes;
+use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
@@ -14,9 +15,26 @@ class BaseModel
     use HasAttributes,
         HidesAttributes,
         GuardsAttributes,
+        HasTimestamps,
         HasRelation;
 
     protected $connection;
+
+    protected $incrementing = false;
+
+    /**
+     * The name of the "created at" field.
+     *
+     * @var string|null
+     */
+    const CREATED_AT = 'created_at';
+
+    /**
+     * The name of the "updated at" field.
+     *
+     * @var string|null
+     */
+    const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = "id";
 
@@ -95,4 +113,26 @@ class BaseModel
         })->all();
     }
 
+    /**
+     * Get the value indicating whether the IDs are incrementing.
+     *
+     * @return bool
+     */
+    public function getIncrementing()
+    {
+        return $this->incrementing;
+    }
+
+    /**
+     * Set whether IDs are incrementing.
+     *
+     * @param  bool  $value
+     * @return $this
+     */
+    public function setIncrementing($value)
+    {
+        $this->incrementing = $value;
+
+        return $this;
+    }
 }

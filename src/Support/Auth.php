@@ -20,7 +20,9 @@ trait Auth
 
         return once(function () use ($apiToken) {
             $userId = $this->redis->get($this->getColumnKey(self::API_KEY, $apiToken));
-            return $this->getById($userId);
+
+            if (is_null($userId)) return null;
+            return $this->get($userId);
         });
     }
 
@@ -61,9 +63,7 @@ trait Auth
             // User login & updating token
             Redis::hmset($userKey, 'api_token', $authToken, 'last_login', now()->timestamp);
 
-            $userData = $this->getById($userId);
-
-            return $userData;
+            return $this->get($userId);
 
         } else {
             // Invalid login details

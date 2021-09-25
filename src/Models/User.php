@@ -34,10 +34,13 @@ class User extends BaseModel implements
      * @var string[]
      */
     protected $fillable = [
+        'id',
         'name',
         'email',
         'password',
         'api_token',
+        'remember_token',
+        'last_login',
     ];
 
     /**
@@ -48,6 +51,7 @@ class User extends BaseModel implements
     protected $hidden = [
         'password',
         'remember_token',
+        'api_token',
     ];
 
     /**
@@ -59,12 +63,6 @@ class User extends BaseModel implements
         'email' => self::EMAIL_KEY,
         'api_token' => self::API_KEY,
     ];
-
-    public function getById($id)
-    {
-        $userData = $this->redis->hgetall(self::getColumnKey(self::ID_KEY, $id));
-        return new static($userData);
-    }
 
     public function create($attributes)
     {

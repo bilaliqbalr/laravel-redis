@@ -2,9 +2,9 @@
 
 namespace Bilaliqbalr\LaravelRedis\Auth;
 
+use Illuminate\Auth\GenericUser;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider as AuthUserProvider;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Hash;
 use \Bilaliqbalr\LaravelRedis\Models\User;
 
@@ -23,21 +23,24 @@ class UserProvider implements AuthUserProvider
 
     public function retrieveById($identifier)
     {
-        $userData = $this->user->getUserById($identifier);
+        $user = $this->user->get($identifier);
 
-        return empty($userData) ? null : new User($this->user->getAttributes());
+        return $this->getGenericUser($user);
     }
 
     public function retrieveByToken($identifier, $token)
     {
-        $userData = $this->user->getByApiToken($token);
+        $user = $this->user->getByApiToken($token);
 
-        return is_array($userData) ? new User($this->user->getAttributes()) : null;
+        return $this->getGenericUser($user);
     }
 
     public function updateRememberToken(Authenticatable $user, $token)
     {
-        $user->setRememberToken($token);
+        $user->update([
+            $user->getRememberTokenName(), $token
+        ]);
+//        $user->setRememberToken($token);
     }
 
     public function retrieveByCredentials(array $credentials)
@@ -52,12 +55,9 @@ class UserProvider implements AuthUserProvider
         }
 
         // User is a class from Laravel Auth System
-        $userData = $this->user->login($credentials['email'], $credentials['password']);
-        if (isset($userData['status']) && $userData['status'] === false) {
-            return null;
-        }
+        $user = $this->user->login($credentials['email'], $credentials['password']);
 
-        return new User($this->user->getAttributes());
+        return $this->getGenericUser($user);
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
@@ -69,5 +69,11 @@ class UserProvider implements AuthUserProvider
         return Hash::check(
             $credentials['password'], $user->getAuthPassword()
         );
+    }
+
+    protected function getGenericUser($user)
+    {
+        return $user;
+        return $user instanceof User ? new GenericUser($user->getAttributes()) : null;
     }
 }

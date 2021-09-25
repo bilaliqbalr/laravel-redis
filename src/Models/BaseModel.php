@@ -92,6 +92,11 @@ class BaseModel extends RedisBaseModel implements ModelContract
             }
         }
 
+        if ($this->usesTimestamps()) {
+            $attributes[self::CREATED_AT] = now()->timestamp;
+            $attributes[self::UPDATED_AT] = now()->timestamp;
+        }
+
         // Saving model info
         $this->redis->hmset(
             $this->getColumnKey($this::ID_KEY, $newId),
@@ -99,5 +104,82 @@ class BaseModel extends RedisBaseModel implements ModelContract
         );
 
         return $attributes;
+    }
+
+    public function update($attributes)
+    {
+        if ($this->usesTimestamps()) {
+            $attributes[self::UPDATED_AT] = now()->timestamp;
+        }
+
+        $this->fill($attributes)->save();
+    }
+
+    protected function save()
+    {
+        $this->redis->hmset(
+            $this->getColumnKey($this::ID_KEY, $this->getAttribute($this->getKeyName())),
+            $this->attributes
+        );
+    }
+
+    /**
+     * @param $value
+     * @param null $field
+     * @return $this
+     */
+    public function get($value, $field = null)
+    {
+        $field = is_null($field) ? $this::ID_KEY : $field;
+        $data = $this->redis->hgetall($this->getColumnKey($field, $value));
+
+        if (empty($data)) return null;
+
+        return new static($data);
+    }
+
+    /**
+     * Dynamically access the user's attributes.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function __get($key)
+    {
+        return $this->attributes[$key];
+    }
+
+    /**
+     * Dynamically set an attribute on the user.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return void
+     */
+    public function __set($key, $value)
+    {
+        $this->attributes[$key] = $value;
+    }
+
+    /**
+     * Dynamically check if a value is set on the user.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function __isset($key)
+    {
+        return isset($this->attributes[$key]);
+    }
+
+    /**
+     * Dynamically unset a value on the user.
+     *
+     * @param  string  $key
+     * @return void
+     */
+    public function __unset($key)
+    {
+        unset($this->attributes[$key]);
     }
 }
