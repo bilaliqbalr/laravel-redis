@@ -54,6 +54,10 @@ class User extends BaseModel implements
         'api_token',
     ];
 
+    protected $dates = [
+        'last_login'
+    ];
+
     /**
      * The attributes that will be searchable.
      *

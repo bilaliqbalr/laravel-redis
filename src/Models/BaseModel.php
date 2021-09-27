@@ -5,6 +5,7 @@ namespace Bilaliqbalr\LaravelRedis\Models;
 
 use Bilaliqbalr\LaravelRedis\Contracts\Model as ModelContract;
 use Bilaliqbalr\LaravelRedis\Support\BaseModel as RedisBaseModel;
+use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
@@ -136,6 +137,46 @@ class BaseModel extends RedisBaseModel implements ModelContract
         if (empty($data)) return null;
 
         return new static($data);
+    }
+
+    /**
+     * Convert the model instance to an array.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->attributesToArray();
+    }
+
+    /**
+     * Convert the model instance to JSON.
+     *
+     * @param  int  $options
+     * @return string
+     *
+     * @throws \Illuminate\Database\Eloquent\JsonEncodingException
+     */
+    public function toJson($options = 0)
+    {
+        $json = json_encode($this->jsonSerialize(), $options);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw JsonEncodingException::forModel($this, json_last_error_msg());
+        }
+
+        return $json;
+    }
+
+    /**
+     * Convert the object into something JSON serializable.
+     *
+     * @return array
+     */
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
+    {
+        return $this->toArray();
     }
 
     /**
