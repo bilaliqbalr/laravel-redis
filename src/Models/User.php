@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-class User extends BaseModel implements
+class User extends Model implements
     AuthenticatableContract,
     AuthorizableContract,
     CanResetPasswordContract
@@ -51,7 +51,6 @@ class User extends BaseModel implements
     protected $hidden = [
         'password',
         'remember_token',
-        'api_token',
     ];
 
     protected $dates = [
@@ -74,5 +73,20 @@ class User extends BaseModel implements
         $attributes['password'] = Hash::make($attributes['password']);
 
         return parent::create($attributes);
+    }
+
+    public function getUserByAuthToken($authToken = false)
+    {
+        dd(1);
+        $authToken = $authToken === false ? request()->bearerToken() : $authToken;
+
+        if (empty($authToken)) {
+            return false;
+        }
+
+        return once(function () use ($authToken) {
+            $id = $this->getConnection()->get($this->getColumnKey(self::API_KEY, $authToken));
+            return $this->get($id);
+        });
     }
 }

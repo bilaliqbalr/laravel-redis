@@ -1,6 +1,6 @@
 <?php
 
-namespace Bilaliqbalr\LaravelRedis\Support;
+namespace Bilaliqbalr\LaravelRedis\Support\Relations;
 
 
 use Bilaliqbalr\LaravelRedis\Contracts\Model;
@@ -62,7 +62,7 @@ class Relation
     public function sync()
     {
         // Creating relation
-        $this->current->redis->zadd(
+        $this->current->getConnection()->zadd(
             $this->getRelationKey(),
             $this->related->{$this->foreignKey}
         );
@@ -74,7 +74,7 @@ class Relation
     public function detach()
     {
         // Removing relation
-        $this->current->redis->zrem(
+        $this->current->getConnection()->zrem(
             $this->getRelationKey(),
             $this->related->{$this->foreignKey}
         );
@@ -88,12 +88,12 @@ class Relation
     public function getItems($offset = null, $limit = null)
     {
         if (is_null($offset)) {
-            return $this->current->redis->zrange(
+            return $this->current->getConnection()->zrange(
                 $this->getRelationKey()
             );
         }
 
-        return $this->current->redis->zrange(
+        return $this->current->getConnection()->zrange(
             $this->getRelationKey(), '1', '+inf', 'BYSCORE', 'LIMIT', $offset, $limit
         );
     }
@@ -125,7 +125,7 @@ class Relation
         $currentPage = $currentPage ?? 0;
 
         $items = $this->get($perPage, $currentPage);
-        $total = $this->related->redis->zcard($this->getRelationKey());
+        $total = $this->related->getConnection()->zcard($this->getRelationKey());
 
         return new LengthAwarePaginator($items, $total, $perPage, $currentPage, $options);
     }

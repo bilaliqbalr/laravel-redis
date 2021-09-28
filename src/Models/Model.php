@@ -4,22 +4,51 @@ namespace Bilaliqbalr\LaravelRedis\Models;
 
 
 use Bilaliqbalr\LaravelRedis\Contracts\Model as ModelContract;
-use Bilaliqbalr\LaravelRedis\Support\BaseModel as RedisBaseModel;
+use Bilaliqbalr\LaravelRedis\Support\HasRelation;
+use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
+use Illuminate\Database\Eloquent\Concerns\HasAttributes;
+use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
+use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
 use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
-class BaseModel extends RedisBaseModel implements ModelContract
+class Model implements ModelContract
 {
+    use HasAttributes,
+        HidesAttributes,
+        GuardsAttributes,
+        HasTimestamps,
+        HasRelation;
+
     public const ID_KEY = "{model}:%d";
+
+    protected $incrementing = false;
 
     protected $searchBy = [];
 
     /**
-     * @var Connection
+     * @var string
      */
-    protected $redis;
+    protected $connection;
+
+    /**
+     * The name of the "created at" field.
+     *
+     * @var string|null
+     */
+    const CREATED_AT = 'created_at';
+
+    /**
+     * The name of the "updated at" field.
+     *
+     * @var string|null
+     */
+    const UPDATED_AT = 'updated_at';
+
+    protected $primaryKey = "id";
 
     /**
      * Create a new Eloquent model instance.
@@ -29,9 +58,33 @@ class BaseModel extends RedisBaseModel implements ModelContract
      */
     public function __construct(array $attributes = [])
     {
-        $this->redis = Redis::connection(config('laravel-redis.connection'));
+        $this->connection = $this->connection ?? config('laravel-redis.connection');
 
         $this->fill($attributes);
+    }
+
+    /**
+     * @param $connection
+     */
+    public function setConnectionName($connection)
+    {
+        $this->connection = $connection;
+    }
+
+    /**
+     * @return string
+     */
+    public function getConnectionName()
+    {
+        return $this->connection;
+    }
+
+    /**
+     * @return Connection
+     */
+    public function getConnection()
+    {
+        return Redis::connection($this->getConnectionName());
     }
 
     /**
@@ -42,7 +95,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
      *
      * @throws \Illuminate\Database\Eloquent\MassAssignmentException
      */
-    public function fill(array $attributes) : BaseModel
+    public function fill(array $attributes) : Model
     {
         $totallyGuarded = $this->totallyGuarded();
 
@@ -68,6 +121,104 @@ class BaseModel extends RedisBaseModel implements ModelContract
         $this->attributes[$key] = $value;
     }
 
+    /**
+     * @param mixed ...$arguments
+     * @return string
+     */
+    public function getColumnKey(...$arguments)
+    {
+        $key = array_shift($arguments);
+
+        return sprintf(str_replace(['{model}:'], [$this->prefix()], $key), ...$arguments);
+    }
+
+    /**
+     * Return prefix for current model
+     *
+     * @return string
+     */
+    public function prefix()
+    {
+        return Str::snake(class_basename($this)) . ':';
+    }
+
+    /**
+     * Get next id of current model
+     *
+     * @return mixed
+     */
+    public function getNextId()
+    {
+        $totalRecordsKey = 'total_' . Str::plural(rtrim($this->prefix(), ':'));
+
+        if ( ! $this->getConnection()->exists($totalRecordsKey)) {
+            $this->getConnection()->set($totalRecordsKey, 0);
+        }
+
+        return $this->getConnection()->incr($totalRecordsKey);
+    }
+
+    /**
+     * Get the primary key.
+     *
+     * @return string
+     */
+    public function getKeyName()
+    {
+        return $this->primaryKey;
+    }
+
+    /**
+     * Qualify the given column name by the model's table.
+     *
+     * @param  string  $column
+     * @return string
+     */
+    public function qualifyColumn($column)
+    {
+        if (Str::contains($column, ':')) {
+            return $column;
+        }
+
+        return $this->prefix().$column;
+    }
+
+    /**
+     * Qualify the given columns with the model's table.
+     *
+     * @param  array  $columns
+     * @return array
+     */
+    public function qualifyColumns($columns)
+    {
+        return collect($columns)->map(function ($column) {
+            return $this->qualifyColumn($column);
+        })->all();
+    }
+
+    /**
+     * Get the value indicating whether the IDs are incrementing.
+     *
+     * @return bool
+     */
+    public function getIncrementing()
+    {
+        return $this->incrementing;
+    }
+
+    /**
+     * Set whether IDs are incrementing.
+     *
+     * @param  bool  $value
+     * @return Model
+     */
+    public function setIncrementing($value)
+    {
+        $this->incrementing = $value;
+
+        return $this;
+    }
+
     public function create($attributes)
     {
         $allFields = $this->getFillable() + $this->getHidden() + $this->getGuarded();
@@ -86,7 +237,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
         if (!empty($this->searchBy)) {
             foreach ($this->searchBy as $field => $format) {
                 // Adding fields to make them searchable
-                $this->redis->set(
+                $this->getConnection()->set(
                     $this->getColumnKey($format, $attributes[$field]),
                     $newId
                 );
@@ -99,7 +250,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
         }
 
         // Saving model info
-        $this->redis->hmset(
+        $this->getConnection()->hmset(
             $this->getColumnKey($this::ID_KEY, $newId),
             $attributes
         );
@@ -118,7 +269,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
 
     protected function save()
     {
-        $this->redis->hmset(
+        $this->getConnection()->hmset(
             $this->getColumnKey($this::ID_KEY, $this->{$this->getKeyName()}),
             $this->attributes
         );
@@ -132,7 +283,7 @@ class BaseModel extends RedisBaseModel implements ModelContract
     public function get($value, $field = null)
     {
         $field = is_null($field) ? $this::ID_KEY : $field;
-        $data = $this->redis->hgetall($this->getColumnKey($field, $value));
+        $data = $this->getConnection()->hgetall($this->getColumnKey($field, $value));
 
         if (empty($data)) return null;
 

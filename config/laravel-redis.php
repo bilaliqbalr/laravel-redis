@@ -10,7 +10,7 @@ return [
     /**
      * Name of redis custom guard
      */
-    'guard' => 'redis',
+    'api-guard' => 'redis-api',
 
     /**
      * Name of redis custom user provider

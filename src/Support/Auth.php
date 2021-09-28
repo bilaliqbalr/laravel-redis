@@ -19,7 +19,7 @@ trait Auth
         }
 
         return once(function () use ($apiToken) {
-            $userId = $this->redis->get($this->getColumnKey(self::API_KEY, $apiToken));
+            $userId = $this->getConnection()->get($this->getColumnKey(self::API_KEY, $apiToken));
 
             if (is_null($userId)) return null;
             return $this->get($userId);
@@ -34,7 +34,7 @@ trait Auth
      */
     public function isEmailExists($email)
     {
-        return $this->redis->exists(
+        return $this->getConnection()->exists(
             $this->getColumnKey(self::EMAIL_KEY, $email),
         );
     }

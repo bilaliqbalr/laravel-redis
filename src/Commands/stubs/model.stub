@@ -2,9 +2,9 @@
 
 namespace DummyNamespace;
 
-use Bilaliqbalr\LaravelRedis\Models\BaseModel;
+use Bilaliqbalr\LaravelRedis\Models\Model;
 
-class DummyClass extends BaseModel
+class DummyClass extends Model
 {
 
 }
