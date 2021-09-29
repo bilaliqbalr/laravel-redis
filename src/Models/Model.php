@@ -340,30 +340,32 @@ class Model implements ModelContract
 
         $id = $this->getAttribute($this->getKeyName());
 
+        // list of all keys to be deleted
+        $keyToDelete = [
+            $this->getColumnKey($this::ID_KEY, $id)
+        ];
+
         // Removing searchable data
         if (!empty($this->searchBy)) {
             foreach ($this->searchBy as $field => $format) {
                 // Adding fields to make them searchable
-                $this->getConnection()->del(
-                    $this->getColumnKey($format, $this->getAttribute($field))
-                );
+                array_push($keyToDelete, $this->getColumnKey($format, $this->getAttribute($field)));
             }
         }
 
-        // Removing relations
+        // Removing relations, not removing relation models
         $matchingKeys = $this->getConnection()->keys(
             $this->getColumnKey($this::ID_KEY, $id) . ':rel:*'
         );
         $matchingKeysToRem = array_map(function ($key) {
             // removing laravel prefixes
-            return ltrim($key, config('database.redis.options.prefix'));
+            return preg_replace('/^'.config('database.redis.options.prefix').'/', '', $key);
         }, $matchingKeys);
-        $this->getConnection()->del($matchingKeysToRem);
 
-        // Removing record
-        $this->getConnection()->hdel(
-            $this->getColumnKey($this::ID_KEY, $id)
-        );
+        $keyToDelete = array_merge($keyToDelete, $matchingKeysToRem);
+
+        // Deleting all
+        $this->getConnection()->del($keyToDelete);
 
         $this->exists = false;
 
