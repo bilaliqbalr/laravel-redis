@@ -236,7 +236,7 @@ class Model implements ModelContract
         return $this;
     }
 
-    public function create($attributes) : Model
+    public function create($attributes)
     {
         $allFields = $this->getFillable() + $this->getHidden() + $this->getGuarded();
 
