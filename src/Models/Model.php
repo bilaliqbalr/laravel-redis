@@ -81,7 +81,7 @@ class Model implements ModelContract
     /**
      * @return string
      */
-    public function getConnectionName()
+    public function getConnectionName() : string
     {
         return $this->connection;
     }
@@ -89,7 +89,7 @@ class Model implements ModelContract
     /**
      * @return Connection
      */
-    public function getConnection()
+    public function getConnection() : Connection
     {
         return Redis::connection($this->getConnectionName());
     }
@@ -132,7 +132,7 @@ class Model implements ModelContract
      * @param mixed ...$arguments
      * @return string
      */
-    public function getColumnKey(...$arguments)
+    public function getColumnKey(...$arguments) : string
     {
         $key = array_shift($arguments);
 
@@ -144,7 +144,7 @@ class Model implements ModelContract
      *
      * @return string
      */
-    public function prefix()
+    public function prefix() : string
     {
         return Str::snake(class_basename($this)) . ':';
     }
@@ -170,7 +170,7 @@ class Model implements ModelContract
      *
      * @return string
      */
-    public function getKeyName()
+    public function getKeyName() : string
     {
         return $this->primaryKey;
     }
@@ -180,7 +180,7 @@ class Model implements ModelContract
      *
      * @return string
      */
-    public function getForeignKey()
+    public function getForeignKey() : string
     {
         return Str::snake(class_basename($this)).'_'.$this->getKeyName();
     }
@@ -191,7 +191,7 @@ class Model implements ModelContract
      * @param  string  $column
      * @return string
      */
-    public function qualifyColumn($column)
+    public function qualifyColumn($column) : string
     {
         if (Str::contains($column, ':')) {
             return $column;
@@ -206,7 +206,7 @@ class Model implements ModelContract
      * @param  array  $columns
      * @return array
      */
-    public function qualifyColumns($columns)
+    public function qualifyColumns($columns) : array
     {
         return collect($columns)->map(function ($column) {
             return $this->qualifyColumn($column);
@@ -218,7 +218,7 @@ class Model implements ModelContract
      *
      * @return bool
      */
-    public function getIncrementing()
+    public function getIncrementing() : bool
     {
         return $this->incrementing;
     }
@@ -229,14 +229,14 @@ class Model implements ModelContract
      * @param  bool  $value
      * @return Model
      */
-    public function setIncrementing($value)
+    public function setIncrementing($value) : Model
     {
         $this->incrementing = $value;
 
         return $this;
     }
 
-    public function create($attributes)
+    public function create($attributes) : Model
     {
         $allFields = $this->getFillable() + $this->getHidden() + $this->getGuarded();
 
@@ -308,7 +308,7 @@ class Model implements ModelContract
      * @param null $field
      * @return $this
      */
-    public function get($value, $field = null)
+    public function get($value, $field = null) : ?Model
     {
         $field = is_null($field) ? $this::ID_KEY : $field;
         $data = $this->getConnection()->hgetall($this->getColumnKey($field, $value));
@@ -322,7 +322,7 @@ class Model implements ModelContract
         return $this;
     }
 
-    public function destroy($id)
+    public function destroy($id) : bool
     {
         $this->exists = true;
 
@@ -331,7 +331,7 @@ class Model implements ModelContract
         return $model->delete();
     }
 
-    public function delete()
+    public function delete() : bool
     {
         // Checking if record exists in model to proceed
         if (!$this->exists) {
@@ -382,7 +382,7 @@ class Model implements ModelContract
      *
      * @return array
      */
-    public function toArray()
+    public function toArray() : array
     {
         return $this->attributesToArray();
     }
@@ -395,7 +395,7 @@ class Model implements ModelContract
      *
      * @throws \Illuminate\Database\Eloquent\JsonEncodingException
      */
-    public function toJson($options = 0)
+    public function toJson($options = 0) : string
     {
         $json = json_encode($this->jsonSerialize(), $options);
 
