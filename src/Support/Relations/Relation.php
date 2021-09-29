@@ -112,10 +112,10 @@ class Relation
      */
     public function get($perPage = null, $currentPage = null)
     {
-        $relatedItems = [];
+        $relatedItems = collect([]);
 
         foreach ($this->getItems($currentPage, $perPage) as $id) {
-            $relatedItems[] = $this->related->get($id);
+            $relatedItems->push($this->related->get($id));
         }
 
         return $relatedItems;

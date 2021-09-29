@@ -5,6 +5,8 @@ namespace Bilaliqbalr\LaravelRedis\Models;
 
 use Bilaliqbalr\LaravelRedis\Contracts\Model as ModelContract;
 use Bilaliqbalr\LaravelRedis\Support\HasRelation;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
 use Illuminate\Database\Eloquent\Concerns\HasAttributes;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
@@ -15,7 +17,7 @@ use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
-class Model implements ModelContract
+class Model implements ModelContract, Arrayable, Jsonable
 {
     use HasAttributes,
         HidesAttributes,
