@@ -41,7 +41,15 @@ class Relation
      */
     public function getForeignKey()
     {
-        return Str::snake(class_basename($this)).'_'.$this->current->getKeyName();
+        return $this->foreignKey ?: $this->current->getForeignKey();
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getLocalKey()
+    {
+        return $this->localKey ?: $this->current->getKeyName();
     }
 
     /**
@@ -50,10 +58,9 @@ class Relation
      */
     public function getRelationKey()
     {
-        $localKey = $this->localKey ?: $this->current->getKeyName();
         $foreignPrefix = rtrim($this->related->qualifyColumn(""), ':');
 
-        return "{$this->current->qualifyColumn($this->{$localKey})}:rel:{$foreignPrefix}";
+        return "{$this->current->qualifyColumn($this->current->{$this->getLocalKey()})}:rel:{$foreignPrefix}";
     }
 
     /**
@@ -64,7 +71,7 @@ class Relation
         // Creating relation
         $this->current->getConnection()->zadd(
             $this->getRelationKey(),
-            $this->related->{$this->foreignKey}
+            $this->related->{$this->getLocalKey()}
         );
     }
 
@@ -76,7 +83,7 @@ class Relation
         // Removing relation
         $this->current->getConnection()->zrem(
             $this->getRelationKey(),
-            $this->related->{$this->foreignKey}
+            $this->related->{$this->getLocalKey()}
         );
     }
 
@@ -89,7 +96,7 @@ class Relation
     {
         if (is_null($offset)) {
             return $this->current->getConnection()->zrange(
-                $this->getRelationKey()
+                $this->getRelationKey(), '1', '-1'
             );
         }
 
@@ -120,7 +127,7 @@ class Relation
      * @param array $options
      * @return LengthAwarePaginator
      */
-    public function paginate($perPage, $currentPage = null, array $options = [])
+    public function paginate($perPage, $currentPage = null, array $options = []) : LengthAwarePaginator
     {
         $currentPage = $currentPage ?? 0;
 
@@ -128,5 +135,23 @@ class Relation
         $total = $this->related->getConnection()->zcard($this->getRelationKey());
 
         return new LengthAwarePaginator($items, $total, $perPage, $currentPage, $options);
+    }
+
+    /**
+     * @param $attributes
+     * @return Model
+     */
+    public function create($attributes) : Model
+    {
+        // Adding foreign key info
+        $attributes[$this->getForeignKey()] = $this->current->{$this->getLocalKey()};
+
+        $createdRec = $this->related->create($attributes);
+        $this->related = $createdRec;
+
+        // Creating relation
+        $this->sync();
+
+        return $createdRec;
     }
 }

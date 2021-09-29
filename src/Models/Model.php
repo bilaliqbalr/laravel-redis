@@ -35,6 +35,13 @@ class Model implements ModelContract
     protected $connection;
 
     /**
+     * If current model exists or not
+     *
+     * @var bool
+     */
+    protected $exists = false;
+
+    /**
      * The name of the "created at" field.
      *
      * @var string|null
@@ -169,6 +176,16 @@ class Model implements ModelContract
     }
 
     /**
+     * Get the default foreign key name for the model.
+     *
+     * @return string
+     */
+    public function getForeignKey()
+    {
+        return Str::snake(class_basename($this)).'_'.$this->getKeyName();
+    }
+
+    /**
      * Qualify the given column name by the model's table.
      *
      * @param  string  $column
@@ -255,9 +272,15 @@ class Model implements ModelContract
             $attributes
         );
 
-        return $attributes;
+        $this->exists = true;
+
+        return new static($attributes);
     }
 
+    /**
+     * Update attributes in model
+     * @param $attributes
+     */
     public function update($attributes)
     {
         if ($this->usesTimestamps()) {
@@ -267,12 +290,17 @@ class Model implements ModelContract
         $this->fill($attributes)->save();
     }
 
+    /**
+     * Update model with current attributes
+     */
     protected function save()
     {
         $this->getConnection()->hmset(
             $this->getColumnKey($this::ID_KEY, $this->{$this->getKeyName()}),
             $this->attributes
         );
+
+        $this->exists = true;
     }
 
     /**
@@ -287,7 +315,64 @@ class Model implements ModelContract
 
         if (empty($data)) return null;
 
-        return new static($data);
+        $this->exists = true;
+
+        $this->fill($data);
+
+        return $this;
+    }
+
+    public function destroy($id)
+    {
+        $this->exists = true;
+
+        $model = (new static)->get($id);
+
+        return $model->delete();
+    }
+
+    public function delete()
+    {
+        // Checking if record exists in model to proceed
+        if (!$this->exists) {
+            return false;
+        }
+
+        $id = $this->getAttribute($this->getKeyName());
+
+        // Removing searchable data
+        if (!empty($this->searchBy)) {
+            foreach ($this->searchBy as $field => $format) {
+                // Adding fields to make them searchable
+                $this->getConnection()->del(
+                    $this->getColumnKey($format, $this->getAttribute($field))
+                );
+            }
+        }
+
+        // Removing relations
+        $matchingKeys = $this->getConnection()->keys(
+            $this->getColumnKey($this::ID_KEY, $id) . ':rel:*'
+        );
+        $matchingKeysToRem = array_map(function ($key) {
+            // removing laravel prefixes
+            return ltrim($key, config('database.redis.options.prefix'));
+        }, $matchingKeys);
+        $this->getConnection()->del($matchingKeysToRem);
+
+        // Removing record
+        $this->getConnection()->hdel(
+            $this->getColumnKey($this::ID_KEY, $id)
+        );
+
+        $this->exists = false;
+
+        return true;
+    }
+
+    public function getAttribute($key)
+    {
+        return $this->attributes[$key];
     }
 
     /**
@@ -373,5 +458,27 @@ class Model implements ModelContract
     public function __unset($key)
     {
         unset($this->attributes[$key]);
+    }
+
+    /**
+     * Handle dynamic static method calls into the model.
+     *
+     * @param  string  $method
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public static function __callStatic($method, $parameters)
+    {
+        return (new static)->$method(...$parameters);
+    }
+
+    /**
+     * Convert the model to its string representation.
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->toJson();
     }
 }
