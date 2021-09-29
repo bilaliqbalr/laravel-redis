@@ -96,12 +96,12 @@ class Relation
     {
         if (is_null($offset)) {
             return $this->current->getConnection()->zrange(
-                $this->getRelationKey(), '1', '-1'
+                $this->getRelationKey(), '0', '-1'
             );
         }
 
         return $this->current->getConnection()->zrange(
-            $this->getRelationKey(), '1', '+inf', 'BYSCORE', 'LIMIT', $offset, $limit
+            $this->getRelationKey(), '0', '+inf', 'BYSCORE', 'LIMIT', $offset, $limit
         );
     }
 
