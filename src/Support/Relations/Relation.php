@@ -5,6 +5,7 @@ namespace Bilaliqbalr\LaravelRedis\Support\Relations;
 
 use Bilaliqbalr\LaravelRedis\Contracts\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Relation
@@ -92,23 +93,20 @@ class Relation
      * @param null $limit
      * @return mixed
      */
-    public function getItems($offset = null, $limit = null)
+    public function getItems($offset = null, $limit = null, $inReverseOrder = true)
     {
-        if (is_null($offset)) {
-            return $this->current->getConnection()->zrange(
-                $this->getRelationKey(), '0', '-1'
-            );
-        }
+        $order = $inReverseOrder ? ' REV ' : '';
+        $limit = !is_null($offset) ? "LIMIT {$offset} {$limit}" : "";
 
         return $this->current->getConnection()->zrange(
-            $this->getRelationKey(), '0', '+inf', 'BYSCORE', 'LIMIT', $offset, $limit
+            $this->getRelationKey(), '0', '-1', "BYSCORE {$order} {$limit}"
         );
     }
 
     /**
      * @param null $perPage
      * @param null $currentPage
-     * @return array
+     * @return Collection
      */
     public function get($perPage = null, $currentPage = null)
     {

@@ -317,11 +317,9 @@ class Model implements ModelContract, Arrayable, Jsonable
 
         if (empty($data)) return null;
 
-        $this->exists = true;
-
-        $this->fill($data);
-
-        return $this;
+        $model = $this->newModel($data);
+        $model->exists = true;
+        return $model;
     }
 
     public function destroy($id) : bool
@@ -374,9 +372,21 @@ class Model implements ModelContract, Arrayable, Jsonable
         return true;
     }
 
+    /**
+     * @param $key
+     * @return mixed
+     */
     public function getAttribute($key)
     {
         return $this->attributes[$key];
+    }
+
+    /**
+     * @param null $attributes
+     */
+    public function newModel($attributes = null)
+    {
+        return new static($attributes);
     }
 
     /**
