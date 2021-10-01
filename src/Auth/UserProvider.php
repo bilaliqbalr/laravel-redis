@@ -2,7 +2,6 @@
 
 namespace Bilaliqbalr\LaravelRedis\Auth;
 
-use Illuminate\Auth\GenericUser;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider as AuthUserProvider;
 use Illuminate\Support\Facades\Hash;
