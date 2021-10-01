@@ -13,8 +13,6 @@ interface Model
 
     public function getColumnKey(...$arguments) : string;
 
-    public function getNextId();
-
     public function getForeignKey() : string;
 
     public function getKeyName() : string;

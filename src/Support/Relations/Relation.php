@@ -6,7 +6,6 @@ namespace Bilaliqbalr\LaravelRedis\Support\Relations;
 use Bilaliqbalr\LaravelRedis\Contracts\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class Relation
 {
@@ -14,16 +13,19 @@ class Relation
      * @var Model
      */
     private $current;
+
     /**
      * @var Model
      */
     private $related;
+
     /**
-     * @var null
+     * @var string|null
      */
     private $foreignKey;
+
     /**
-     * @var null
+     * @var string|null
      */
     private $localKey;
 
@@ -36,28 +38,31 @@ class Relation
     }
 
     /**
-     * Get the default foreign key name for the model.
+     * Get the foreign key name for the model.
      *
      * @return string
      */
-    public function getForeignKey()
+    protected function getForeignKey() : string
     {
         return $this->foreignKey ?: $this->current->getForeignKey();
     }
 
     /**
-     * @return mixed|string
+     * Get the local key of current table
+     *
+     * @return string
      */
-    public function getLocalKey()
+    protected function getLocalKey() : string
     {
         return $this->localKey ?: $this->current->getKeyName();
     }
 
     /**
-     * Get the redis key for relationship
+     * Get the redis key to create relationship
+     *
      * @return string
      */
-    public function getRelationKey()
+    public function getRelationKey() : string
     {
         $foreignPrefix = rtrim($this->related->qualifyColumn(""), ':');
 
@@ -77,7 +82,7 @@ class Relation
     }
 
     /**
-     * Unlink the relation
+     * Removing the relation
      */
     public function detach()
     {
@@ -89,11 +94,13 @@ class Relation
     }
 
     /**
+     * Return related model ids
+     *
      * @param null $offset
      * @param null $limit
      * @return mixed
      */
-    public function getItems($offset = null, $limit = null, $inReverseOrder = true)
+    protected function getItems($offset = null, $limit = null, $inReverseOrder = true)
     {
         $order = $inReverseOrder ? ' REV ' : '';
         $limit = !is_null($offset) ? "LIMIT {$offset} {$limit}" : "";
@@ -104,11 +111,13 @@ class Relation
     }
 
     /**
+     * Fetch and return related model data
+     *
      * @param null $perPage
      * @param null $currentPage
      * @return Collection
      */
-    public function get($perPage = null, $currentPage = null)
+    public function get($perPage = null, $currentPage = null) : Collection
     {
         $relatedItems = collect([]);
 
@@ -136,6 +145,8 @@ class Relation
     }
 
     /**
+     * Creating related model based on the relation
+     *
      * @param $attributes
      * @return Model
      */

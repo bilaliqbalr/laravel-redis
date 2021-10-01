@@ -12,9 +12,10 @@ trait HasRelation
      * @param Model $related
      * @param null $foreignKey
      * @param null $localKey
+     *
      * @return Relation
      */
-    public function relation(Model $related, $foreignKey = null, $localKey = null)
+    public function relation(Model $related, $foreignKey = null, $localKey = null) : Relation
     {
         return new Relation($this, $related, $foreignKey, $localKey);
     }

@@ -25,13 +25,24 @@ class Model implements ModelContract, Arrayable, Jsonable
         HasTimestamps,
         HasRelation;
 
+    /**
+     * This is the default format key against which model data will be stored in redis
+     */
     public const ID_KEY = "{model}:%d";
 
     protected $incrementing = false;
 
+    /**
+     * List of all fields to make model searchable on, this way while creating model,
+     * it will store model id against those field values as a key value pair
+     *
+     * @var array
+     */
     protected $searchBy = [];
 
     /**
+     * Redis connection name as defined in config/database.php
+     *
      * @var string
      */
     protected $connection;
@@ -60,22 +71,22 @@ class Model implements ModelContract, Arrayable, Jsonable
     protected $primaryKey = "id";
 
     /**
-     * Create a new Eloquent model instance.
+     * Create a new Redis model instance.
      *
      * @param  array  $attributes
      * @return void
      */
     public function __construct(array $attributes = [])
     {
-        $this->connection = $this->connection ?? config('laravel-redis.connection');
+        $this->setConnectionName($this->connection ?? config('laravel-redis.connection'));
 
         $this->fill($attributes);
     }
 
     /**
-     * @param $connection
+     * @param string $connection
      */
-    public function setConnectionName($connection)
+    public function setConnectionName(string $connection)
     {
         $this->connection = $connection;
     }
@@ -89,6 +100,8 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
+     * Return redis connection object
+     *
      * @return Connection
      */
     public function getConnection() : Connection
@@ -102,7 +115,7 @@ class Model implements ModelContract, Arrayable, Jsonable
      * @param  array  $attributes
      * @return $this
      *
-     * @throws \Illuminate\Database\Eloquent\MassAssignmentException
+     * @throws MassAssignmentException
      */
     public function fill(array $attributes) : Model
     {
@@ -125,6 +138,10 @@ class Model implements ModelContract, Arrayable, Jsonable
         return $this;
     }
 
+    /**
+     * @param $key
+     * @param $value
+     */
     public function setAttribute($key, $value)
     {
         $this->attributes[$key] = $value;
@@ -142,7 +159,8 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
-     * Return prefix for current model
+     * Return prefix for current model, this prefix will be used
+     * while storing any kind of data related to this model
      *
      * @return string
      */
@@ -152,11 +170,11 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
-     * Get next id of current model
+     * Return new id for model by maintaining auto-increment in redis environment
      *
      * @return mixed
      */
-    public function getNextId()
+    protected function getNextId()
     {
         $totalRecordsKey = 'total_' . Str::plural(rtrim($this->prefix(), ':'));
 
@@ -231,18 +249,25 @@ class Model implements ModelContract, Arrayable, Jsonable
      * @param  bool  $value
      * @return Model
      */
-    public function setIncrementing($value) : Model
+    public function setIncrementing(bool $value) : Model
     {
         $this->incrementing = $value;
 
         return $this;
     }
 
+    /**
+     * Create new record in redis database using the provided attributes
+     *
+     * @param $attributes
+     * @return $this
+     */
     public function create($attributes)
     {
+        // Combining all fields to auto-fill them with at least with null
         $allFields = $this->getFillable() + $this->getHidden() + $this->getGuarded();
 
-        // fill all attributes
+        // fill all fields
         $attributes = collect($allFields)->unique()->mapWithKeys(function ($field) use ($attributes) {
             return [$field => $attributes[$field] ?? null];
         })->toArray();
@@ -263,6 +288,7 @@ class Model implements ModelContract, Arrayable, Jsonable
             }
         }
 
+        // Maintaining timestamps
         if ($this->usesTimestamps()) {
             $attributes[self::CREATED_AT] = now()->timestamp;
             $attributes[self::UPDATED_AT] = now()->timestamp;
@@ -276,7 +302,7 @@ class Model implements ModelContract, Arrayable, Jsonable
 
         $this->exists = true;
 
-        return new static($attributes);
+        return $this->newModel($attributes);
     }
 
     /**
@@ -297,6 +323,7 @@ class Model implements ModelContract, Arrayable, Jsonable
      */
     protected function save()
     {
+        // Updating data
         $this->getConnection()->hmset(
             $this->getColumnKey($this::ID_KEY, $this->{$this->getKeyName()}),
             $this->attributes
@@ -322,6 +349,12 @@ class Model implements ModelContract, Arrayable, Jsonable
         return $model;
     }
 
+    /**
+     * Delete record from redis database by id
+     *
+     * @param $id
+     * @return bool
+     */
     public function destroy($id) : bool
     {
         $this->exists = true;
@@ -331,6 +364,11 @@ class Model implements ModelContract, Arrayable, Jsonable
         return $model->delete();
     }
 
+    /**
+     * Performing delete operation on redis database
+     *
+     * @return bool
+     */
     public function delete() : bool
     {
         // Checking if record exists in model to proceed
@@ -384,7 +422,7 @@ class Model implements ModelContract, Arrayable, Jsonable
     /**
      * @param null $attributes
      */
-    public function newModel($attributes = null)
+    public function newModel($attributes = null) : Model
     {
         return new static($attributes);
     }
@@ -483,6 +521,22 @@ class Model implements ModelContract, Arrayable, Jsonable
      */
     public static function __callStatic($method, $parameters)
     {
+        // Handle static methods based on $searchBy
+        if (Str::startsWith($method, 'searchBy')) {
+            $class = (new static);
+            $field = Str::snake(str_replace('searchBy', '', $method));
+
+            if (!isset($class->searchBy[$field])) {
+                throw new \Exception("Field {$field} not found in 'search by' array.");
+            } else {
+                $id = $class->getConnection()->get(
+                    $class->getColumnKey($class->searchBy[$field], $parameters[0])
+                );
+
+                return $class->get($id);
+            }
+        }
+
         return (new static)->$method(...$parameters);
     }
 
