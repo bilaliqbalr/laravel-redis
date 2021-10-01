@@ -3,65 +3,66 @@
 namespace Bilaliqbalr\LaravelRedis\Support;
 
 
+use Bilaliqbalr\LaravelRedis\Models\Model;
+use Bilaliqbalr\LaravelRedis\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 trait Auth
 {
-    public function getByApiToken($apiToken)
-    {
-        $apiToken = $apiToken === false ? request()->bearerToken() : $apiToken;
-
-        if (empty($apiToken)) {
-            return false;
-        }
-
-        return once(function () use ($apiToken) {
-            $userId = $this->getConnection()->get($this->getColumnKey(self::API_KEY, $apiToken));
-
-            if (is_null($userId)) return null;
-            return $this->get($userId);
-        });
-    }
-
     /**
-     * Check if email exists in redis
+     * Check if email exists
      *
      * @param $email
-     * @return mixed
+     * @return bool
      */
-    public function isEmailExists($email)
+    public function isEmailExists($email) : bool
     {
         return $this->getConnection()->exists(
             $this->getColumnKey(self::EMAIL_KEY, $email),
         );
     }
 
+    /**
+     * @param $email
+     * @param $password
+     *
+     * @return Model|User|null
+     *
+     * @throws ValidationException
+     */
     public function login($email, $password)
     {
-        if ( ! self::isEmailExists($email)) {
+        if ( ! $this->isEmailExists($email)) {
             throw ValidationException::withMessages([
                 'email' => [trans('passwords.user')],
             ]);
         }
 
-        $userId = Redis::get($this->getColumnKey(self::EMAIL_KEY, $email));
+        $userId = $this->getConnection()->get(
+            $this->getColumnKey(self::EMAIL_KEY, $email)
+        );
         $userKey = $this->getColumnKey(self::ID_KEY, $userId);
 
-        $dbPass = Redis::hget($userKey, 'password');
+        $dbPass = $this->getConnection()->hget($userKey, 'password');
 
         if (Hash::check($password, $dbPass)) {
             // Deleting old token
-            Redis::del($this->getColumnKey(self::API_KEY, Redis::hget($userKey, 'api_token')));
+            $this->getConnection()->del(
+                $this->getColumnKey(self::API_KEY, $this->getConnection()->hget($userKey, 'api_token'))
+            );
 
             // Setting new api token
             $authToken = Str::random(60);
-            Redis::set($this->getColumnKey(self::API_KEY, $authToken), $userId);
+            $this->getConnection()->set(
+                $this->getColumnKey(self::API_KEY, $authToken), $userId
+            );
 
             // User login & updating token
-            Redis::hmset($userKey, 'api_token', $authToken, 'last_login', now()->timestamp);
+            $this->getConnection()->hmset(
+                $userKey, 'api_token', $authToken, 'last_login', now()->timestamp
+            );
 
             return $this->get($userId);
 
@@ -73,19 +74,26 @@ trait Auth
         }
     }
 
-    public function logout()
+    /**
+     * User logout functionality in case of using API
+     *
+     * @return bool
+     */
+    public function logout() : bool
     {
-        $authToken = request()->bearerToken();
-        if ( ! $user = self::getByApiToken($authToken)) {
+        if ( ! Auth::check()) {
             return false;
         }
 
-        // logging out user
-        Redis::hmset(
-            $this->getColumnKey(self::API_KEY, $user['id'])
-            , 'api_token', null
+        // logging out user by removing token
+        $user = Auth::user();
+
+        $this->getConnection()->hmset(
+            $this->getColumnKey(self::API_KEY, $user->id), 'api_token', null
         );
-        Redis::del($this->getColumnKey(self::API_KEY, $authToken));
+        $this->getConnection()->del(
+            $this->getColumnKey(self::API_KEY, $user->api_token)
+        );
 
         return true;
     }

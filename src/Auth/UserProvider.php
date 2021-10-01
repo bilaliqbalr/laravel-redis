@@ -30,7 +30,7 @@ class UserProvider implements AuthUserProvider
 
     public function retrieveByToken($identifier, $token)
     {
-        $user = $this->user->getByApiToken($token);
+        $user = User::searchByApiToken($token);
 
         return $this->getGenericUser($user);
     }
@@ -40,7 +40,6 @@ class UserProvider implements AuthUserProvider
         $user->update([
             $user->getRememberTokenName(), $token
         ]);
-//        $user->setRememberToken($token);
     }
 
     public function retrieveByCredentials(array $credentials)
@@ -74,6 +73,5 @@ class UserProvider implements AuthUserProvider
     protected function getGenericUser($user)
     {
         return $user;
-        return $user instanceof User ? new GenericUser($user->getAttributes()) : null;
     }
 }

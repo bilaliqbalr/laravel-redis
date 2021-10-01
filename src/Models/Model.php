@@ -35,6 +35,7 @@ class Model implements ModelContract, Arrayable, Jsonable
     /**
      * List of all fields to make model searchable on, this way while creating model,
      * it will store model id against those field values as a key value pair
+     * where key must be the field name while value will be the redis key format
      *
      * @var array
      */

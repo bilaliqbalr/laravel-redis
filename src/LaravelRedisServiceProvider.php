@@ -2,7 +2,6 @@
 
 namespace Bilaliqbalr\LaravelRedis;
 
-use Bilaliqbalr\LaravelRedis\Auth\UserProvider;
 use Bilaliqbalr\LaravelRedis\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +22,7 @@ class LaravelRedisServiceProvider extends PackageServiceProvider
 
         // Registering redis custom guard
         Auth::viaRequest($this->getConfig('api-guard'), function (Request $request) {
-            return app(User::class)->getUserByAuthToken();
+            return User::searchByApiToken();
         });
 
         // Registering redis custom user provider

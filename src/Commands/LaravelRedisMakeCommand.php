@@ -35,6 +35,10 @@ class LaravelRedisMakeCommand extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace)
     {
+        if (is_dir(app_path('Models/'))) {
+            return $rootNamespace.'\Models\Redis';
+        }
+
         return $rootNamespace.'\Redis';
     }
 }
