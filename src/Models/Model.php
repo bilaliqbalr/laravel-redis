@@ -118,7 +118,7 @@ class Model implements ModelContract, Arrayable, Jsonable
      *
      * @throws MassAssignmentException
      */
-    public function fill(array $attributes) : Model
+    public function fill(array $attributes)
     {
         $totallyGuarded = $this->totallyGuarded();
 
@@ -137,6 +137,19 @@ class Model implements ModelContract, Arrayable, Jsonable
         }
 
         return $this;
+    }
+
+    /**
+     * Fill the model with an array of attributes. Force mass assignment.
+     *
+     * @param  array  $attributes
+     * @return $this
+     */
+    public function forceFill(array $attributes)
+    {
+        return static::unguarded(function () use ($attributes) {
+            return $this->fill($attributes);
+        });
     }
 
     /**
@@ -322,7 +335,7 @@ class Model implements ModelContract, Arrayable, Jsonable
     /**
      * Update model with current attributes
      */
-    protected function save()
+    public function save()
     {
         // Updating data
         $this->getConnection()->hmset(
