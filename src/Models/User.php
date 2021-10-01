@@ -74,19 +74,4 @@ class User extends Model implements
 
         return parent::create($attributes);
     }
-
-    public function getUserByAuthToken($authToken = false)
-    {
-        dd(1);
-        $authToken = $authToken === false ? request()->bearerToken() : $authToken;
-
-        if (empty($authToken)) {
-            return false;
-        }
-
-        return once(function () use ($authToken) {
-            $id = $this->getConnection()->get($this->getColumnKey(self::API_KEY, $authToken));
-            return $this->get($id);
-        });
-    }
 }
