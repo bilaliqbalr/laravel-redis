@@ -1,4 +1,4 @@
-# This package will provide redis based laravel auth driver
+# Laravel Redis
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/bilaliqbalr/laravel-redis.svg?style=flat-square)](https://packagist.org/packages/bilaliqbalr/laravel-redis)
 [![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/bilaliqbalr/laravel-redis/run-tests?label=tests)](https://github.com/bilaliqbalr/laravel-redis/actions?query=workflow%3Arun-tests+branch%3Amain)
@@ -6,24 +6,15 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/bilaliqbalr/laravel-redis.svg?style=flat-square)](https://packagist.org/packages/bilaliqbalr/laravel-redis)
 
 ---
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
+As name suggested this package will let you use Redis as a database instead of using it just for caching purpose.
+It works almost the same way as using Laravel Eloquent but with some differences.
+With this package forget the pain of naming keys and managing them in Redis. Some of the core features are as follows:
 
-1. Press the "Use template" button at the top of this repo to create a new repo with the contents of this laravel-redis
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files
-3. Remove this block of text.
-4. Have fun creating your package.
-5. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
+1. No need to create migration files, just provide required columns in `$fillable` and this package will take care of the rest
+2. Perform CRUD operations just like doing them in Laravel
+3. Search model functionality
+4. Managing relations
 ---
-
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-redis.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-redis)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
 
 ## Installation
 
@@ -33,36 +24,104 @@ You can install the package via composer:
 composer require bilaliqbalr/laravel-redis
 ```
 
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --provider="Bilaliqbalr\LaravelRedis\LaravelRedisServiceProvider" --tag="laravel-redis-migrations"
-php artisan migrate
-```
-
 You can publish the config file with:
 ```bash
 php artisan vendor:publish --provider="Bilaliqbalr\LaravelRedis\LaravelRedisServiceProvider" --tag="laravel-redis-config"
 ```
 
-This is the contents of the published config file:
+## Usage
+
+To create new redis model run this command 
+```php
+php artisan redis:model Post
+```
+
+### Prefixes
+Prefixes are used to maintain the key structure for specific model, this package creates prefixes by default using Model name, 
+and in case you want to change it you can do this as follow
+```php
+public function prefix() : string
+{
+    return 'post';
+}
+```
+
+### Change connection
+You can change redis connection in model as well
+```php
+protected $connection = "redis";
+```
+
+### Searching model by specific column
+In case you need to get model based on specific field, you can do this by using `$searchBy` 
+where you just need to specify column names in the list and this package will store a new key value pair
+where key is `{model}:column:%s` (`%s` is the column value) where value will be the model id to fetch required model. 
 
 ```php
-return [
+protected $searchBy = [
+    'title',
 ];
 ```
 
-## Usage
-
+To get model based on that title field, you can do this as follows
 ```php
-$laravel-redis = new Bilaliqbalr\LaravelRedis();
-echo $laravel-redis->echoPhrase('Hello, Bilaliqbalr!');
+$post = Post::searchByTitle("iphone");
+
+# This works the same way as we do while using eloquent
+# Post::where('title', 'iphone')->first();
 ```
 
-## Testing
+Other operations like create, update and delete works same as in Laravel
+```php
+# Creating new post
+$post = Post::create([
+    'user_id' => 1,
+    'title' => 'iPhone 13 release',
+    'description' => 'Lorem ipsum dolor',
+]);
 
-```bash
-composer test
+# Getting data is a bit different
+$post = Post::get(1); // 1 is the model id
+
+# Get post by title
+$post = Post::searchByTitle('iphone');
+
+# Update post info
+$post->update([
+    'description' => 'Lorem ipsum dolor sat amet'
+]);
+
+# Delete post
+$post->delete();
+// or 
+Post::destroy(1);
+```
+
+### Managing model relations
+
+With this package you can even create relation between models but that is not like the one in Laravel, 
+as redis is not a relational database.
+
+```php
+# User.php
+
+# Adding post relation
+public function posts() {
+    return $this->relation(new \App\Models\Redis\Post);
+}
+```
+
+```php
+# Creating post under user 
+# Below will automatically add user_id field in the Post model. 
+$post = $user->posts()->create([
+    'title' => 'iPhone 13 pro',
+    'description' => 'Lorem ipsum dolor',
+]);
+
+# Getting all user posts
+$posts = $user->post()->get();
+$paginatedPosts = $user->post()->paginate();
 ```
 
 ## Changelog
@@ -72,10 +131,6 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 ## Contributing
 
 Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
 
 ## Credits
 
