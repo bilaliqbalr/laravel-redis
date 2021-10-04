@@ -52,10 +52,7 @@
         "laravel": {
             "providers": [
                 "Bilaliqbalr\\LaravelRedis\\LaravelRedisServiceProvider"
-            ],
-            "aliases": {
-                "LaravelRedis": "Bilaliqbalr\\LaravelRedis\\LaravelRedisFacade"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",
