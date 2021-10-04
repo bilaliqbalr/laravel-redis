@@ -20,7 +20,7 @@ trait Auth
     public function isEmailExists($email) : bool
     {
         return $this->getConnection()->exists(
-            $this->getColumnKey(self::EMAIL_KEY, $email),
+            $this->getSearchColumnKey(self::EMAIL_COL, $email),
         );
     }
 
@@ -41,7 +41,7 @@ trait Auth
         }
 
         $userId = $this->getConnection()->get(
-            $this->getColumnKey(self::EMAIL_KEY, $email)
+            $this->getSearchColumnKey(self::EMAIL_COL, $email)
         );
         $userKey = $this->getColumnKey(self::ID_KEY, $userId);
 
@@ -50,13 +50,13 @@ trait Auth
         if (Hash::check($password, $dbPass)) {
             // Deleting old token
             $this->getConnection()->del(
-                $this->getColumnKey(self::API_KEY, $this->getConnection()->hget($userKey, 'api_token'))
+                $this->getSearchColumnKey(self::API_COL, $this->getConnection()->hget($userKey, 'api_token'))
             );
 
             // Setting new api token
             $authToken = Str::random(60);
             $this->getConnection()->set(
-                $this->getColumnKey(self::API_KEY, $authToken), $userId
+                $this->getSearchColumnKey(self::API_COL, $authToken), $userId
             );
 
             // User login & updating token
@@ -89,10 +89,10 @@ trait Auth
         $user = Auth::user();
 
         $this->getConnection()->hmset(
-            $this->getColumnKey(self::API_KEY, $user->id), 'api_token', null
+            $this->getSearchColumnKey(self::API_COL, $user->id), 'api_token', null
         );
         $this->getConnection()->del(
-            $this->getColumnKey(self::API_KEY, $user->api_token)
+            $this->getSearchColumnKey(self::API_COL, $user->api_token)
         );
 
         return true;

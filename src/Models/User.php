@@ -25,8 +25,8 @@ class User extends Model implements
         MustVerifyEmail,
         Auth;
 
-    public const EMAIL_KEY = "{model}:email:%s";
-    public const API_KEY = "{model}:api_token:%s";
+    public const EMAIL_COL = "email";
+    public const API_COL = "api_token";
 
     /**
      * The attributes that are mass assignable.
@@ -63,8 +63,8 @@ class User extends Model implements
      * @var array
      */
     protected $searchBy = [
-        'email' => self::EMAIL_KEY,
-        'api_token' => self::API_KEY,
+        'email',
+        'api_token',
     ];
 
     public function create($attributes)

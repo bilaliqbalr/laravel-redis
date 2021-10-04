@@ -271,6 +271,18 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
+     * Return searchable column key
+     *
+     * @param $column
+     * @param $value
+     * @return string
+     */
+    public function getSearchColumnKey($column, $value) : string
+    {
+        return $this->getColumnKey("{model}:{$column}:{$value}");
+    }
+
+    /**
      * Create new record in redis database using the provided attributes
      *
      * @param $attributes
@@ -293,10 +305,10 @@ class Model implements ModelContract, Arrayable, Jsonable
 
         // Creating searchable fields
         if (!empty($this->searchBy)) {
-            foreach ($this->searchBy as $field => $format) {
+            foreach ($this->searchBy as $field) {
                 // Adding fields to make them searchable
                 $this->getConnection()->set(
-                    $this->getColumnKey($format, $attributes[$field]),
+                    $this->getSearchColumnKey($field, $attributes[$field]),
                     $newId
                 );
             }
@@ -399,9 +411,9 @@ class Model implements ModelContract, Arrayable, Jsonable
 
         // Removing searchable data
         if (!empty($this->searchBy)) {
-            foreach ($this->searchBy as $field => $format) {
+            foreach ($this->searchBy as $field) {
                 // Adding fields to make them searchable
-                array_push($keyToDelete, $this->getColumnKey($format, $this->getAttribute($field)));
+                array_push($keyToDelete, $this->getSearchColumnKey($field, $this->getAttribute($field)));
             }
         }
 
@@ -540,11 +552,11 @@ class Model implements ModelContract, Arrayable, Jsonable
             $class = (new static);
             $field = Str::snake(str_replace('searchBy', '', $method));
 
-            if (!isset($class->searchBy[$field])) {
+            if (!in_array($field, $class->searchBy)) {
                 throw new \Exception("Field {$field} not found in 'search by' array.");
             } else {
                 $id = $class->getConnection()->get(
-                    $class->getColumnKey($class->searchBy[$field], $parameters[0])
+                    $class->getSearchColumnKey($field, $parameters[0])
                 );
 
                 return $class->get($id);
