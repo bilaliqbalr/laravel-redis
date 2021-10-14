@@ -14,6 +14,7 @@ With this package forget the pain of naming keys and managing them in Redis. Som
 2. Perform CRUD operations just like doing them in Laravel
 3. Search model functionality
 4. Managing relations
+5. Laravel auth backed by Redis
 ---
 
 ## Installation
@@ -122,6 +123,17 @@ $post = $user->posts()->create([
 # Getting all user posts
 $posts = $user->post()->get();
 $paginatedPosts = $user->post()->paginate();
+```
+
+### Auth
+```php
+# In config/auth.php
+'guards' => [
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'redis',  // use provider name as in laravel-redis.php config file
+    ],
+],
 ```
 
 ## Changelog
