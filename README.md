@@ -33,7 +33,7 @@ php artisan vendor:publish --provider="Bilaliqbalr\LaravelRedis\LaravelRedisServ
 ## Usage
 
 To create new redis model run this command 
-```php
+```bash
 php artisan redis:model Post
 ```
 
@@ -97,6 +97,23 @@ $post->delete();
 // or 
 Post::destroy(1);
 ```
+
+### Get all records keys
+```php
+// return list of all records keys from redis
+$post->getAllKeys();
+
+// Return list of all records ids
+$post->getAllKeys(true);
+```
+
+### Add new searchBy fields
+If you need to add new searchBy field after you have records in your redis database, 
+then you need to run this command to make old records searchable with new column   
+```bash
+php artisan refresh:search_by App\\Redis\\Post
+```
+
 
 ### Managing model relations
 
