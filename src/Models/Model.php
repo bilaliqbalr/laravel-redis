@@ -158,13 +158,9 @@ class Model implements ModelContract, Arrayable, Jsonable
         });
     }
 
-    /**
-     * @param $key
-     * @param $value
-     */
-    public function setAttribute($key, $value)
+    public function getDateFormat()
     {
-        $this->attributes[$key] = $value;
+        return $this->dateFormat ?: 'Y-m-d H:i:s';
     }
 
     /**
