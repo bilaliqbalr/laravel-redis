@@ -136,6 +136,12 @@ class Model implements ModelContract, Arrayable, Jsonable
             }
         }
 
+        // Fill missing fields which are now in fillable but not in record, may be added later once record created
+        $missingFields = array_diff($this->getFillable(), array_keys($attributes));
+        foreach ($missingFields as $field) {
+            $this->setAttribute($field, null);
+        }
+
         return $this;
     }
 
@@ -270,6 +276,11 @@ class Model implements ModelContract, Arrayable, Jsonable
         return $this;
     }
 
+    public function getSearchByFields() : array
+    {
+        return $this->searchBy;
+    }
+
     /**
      * Return searchable column key
      *
@@ -359,6 +370,27 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
+     * This will return all records keys of current model
+     *
+     * @param bool $idsOnly
+     * @return mixed
+     */
+    public function getAllKeys($idsOnly = false)
+    {
+        $keys = array_map([$this, 'getKeyWithoutPrefix'], $this->getConnection()->keys(
+            str_replace('-1', '*', $this->getColumnKey($this::ID_KEY, -1)) . '[0-9]'
+        ));
+
+        if ($idsOnly) {
+            $keys = array_map(function($rec) {
+                return str_replace($this->prefix(), '', $rec);
+            }, $keys);
+        }
+
+        return $keys;
+    }
+
+    /**
      * @param $value
      * @param null $field
      * @return $this
@@ -373,6 +405,11 @@ class Model implements ModelContract, Arrayable, Jsonable
         $model = $this->newModel($data);
         $model->exists = true;
         return $model;
+    }
+
+    public function getKeyWithoutPrefix($key)
+    {
+        return preg_replace('/^'.config('database.redis.options.prefix').'/', '', $key);
     }
 
     /**
@@ -421,10 +458,7 @@ class Model implements ModelContract, Arrayable, Jsonable
         $matchingKeys = $this->getConnection()->keys(
             $this->getColumnKey($this::ID_KEY, $id) . ':rel:*'
         );
-        $matchingKeysToRem = array_map(function ($key) {
-            // removing laravel prefixes
-            return preg_replace('/^'.config('database.redis.options.prefix').'/', '', $key);
-        }, $matchingKeys);
+        $matchingKeysToRem = array_map([$this, 'getKeyWithoutPrefix'], $matchingKeys);
 
         $keyToDelete = array_merge($keyToDelete, $matchingKeysToRem);
 

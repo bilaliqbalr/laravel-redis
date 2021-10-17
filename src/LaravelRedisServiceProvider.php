@@ -2,6 +2,7 @@
 
 namespace Bilaliqbalr\LaravelRedis;
 
+use Bilaliqbalr\LaravelRedis\Commands\RefreshSearchByCommand;
 use Bilaliqbalr\LaravelRedis\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,8 @@ class LaravelRedisServiceProvider extends PackageServiceProvider
         $package
             ->name($this->name)
             ->hasConfigFile($this->name)
-            ->hasCommand(LaravelRedisMakeCommand::class);
+            ->hasCommand(LaravelRedisMakeCommand::class)
+            ->hasCommand(RefreshSearchByCommand::class);
 
         // Registering redis custom guard
         Auth::viaRequest($this->getConfig('api-guard'), function (Request $request) {
