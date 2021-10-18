@@ -467,15 +467,6 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
-     * @param $key
-     * @return mixed
-     */
-    public function getAttribute($key)
-    {
-        return $this->attributes[$key];
-    }
-
-    /**
      * @param null $attributes
      */
     public function newModel($attributes = null) : Model
@@ -531,7 +522,7 @@ class Model implements ModelContract, Arrayable, Jsonable
      */
     public function __get($key)
     {
-        return $this->attributes[$key];
+        return $this->getAttribute($key);
     }
 
     /**
@@ -543,7 +534,7 @@ class Model implements ModelContract, Arrayable, Jsonable
      */
     public function __set($key, $value)
     {
-        $this->attributes[$key] = $value;
+        $this->setAttribute($key, $value);
     }
 
     /**
