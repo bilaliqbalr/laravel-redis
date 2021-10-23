@@ -5,19 +5,15 @@ namespace Bilaliqbalr\LaravelRedis\Auth;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider as AuthUserProvider;
 use Illuminate\Support\Facades\Hash;
-use \Bilaliqbalr\LaravelRedis\Models\User;
 
 
 class UserProvider implements AuthUserProvider
 {
-    /**
-     * @var User
-     */
     private $user;
 
-    public function __construct()
+    public function __construct($app, $config)
     {
-        $this->user = app(User::class);
+        $this->user = app($config['model']);
     }
 
     public function retrieveById($identifier)

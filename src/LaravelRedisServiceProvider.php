@@ -2,6 +2,7 @@
 
 namespace Bilaliqbalr\LaravelRedis;
 
+use Bilaliqbalr\LaravelRedis\Auth\UserProvider;
 use Bilaliqbalr\LaravelRedis\Commands\RefreshSearchByCommand;
 use Bilaliqbalr\LaravelRedis\Models\User;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class LaravelRedisServiceProvider extends PackageServiceProvider
 
         // Registering redis custom user provider
         Auth::provider($this->getConfig('provider'), function ($app, array $config) {
-            return new $config['model']();
+            return new UserProvider($app, $config);
         });
     }
 
