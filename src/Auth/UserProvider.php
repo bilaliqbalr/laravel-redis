@@ -25,7 +25,7 @@ class UserProvider implements AuthUserProvider
 
     public function retrieveByToken($identifier, $token)
     {
-        $user = User::searchByApiToken($token);
+        $user = $this->user::searchByApiToken($token);
 
         return $this->getGenericUser($user);
     }
