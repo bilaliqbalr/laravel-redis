@@ -42,6 +42,14 @@ class Model implements ModelContract, Arrayable, Jsonable
     protected $searchBy = [];
 
     /**
+     * Set default values to model attributes, this way whenever you add new columns
+     * it will automatically fill all those newly added columns with default values
+     *
+     * @var array
+     */
+    protected $default = [];
+
+    /**
      * Redis connection name as defined in config/database.php
      *
      * @var string
@@ -111,6 +119,38 @@ class Model implements ModelContract, Arrayable, Jsonable
     }
 
     /**
+     * Provide list of all default values for model attributes
+     * @return array
+     */
+    public function getDefault() : array
+    {
+        return $this->default;
+    }
+
+    /**
+     * Get an attribute from the model.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function getAttribute($key)
+    {
+        if (! $key) {
+            return;
+        }
+
+        // If the attribute exists in the attribute array or has a "get" mutator we will
+        // get the attribute's value. Otherwise, we will proceed as if the developers
+        // are asking for a relationship's value. This covers both types of values.
+        if (array_key_exists($key, $this->attributes) ||
+            array_key_exists($key, $this->casts) ||
+            $this->hasGetMutator($key) ||
+            $this->isClassCastable($key)) {
+            return $this->getAttributeValue($key);
+        }
+    }
+
+    /**
      * Fill the model with an array of attributes.
      *
      * @param  array  $attributes
@@ -136,10 +176,11 @@ class Model implements ModelContract, Arrayable, Jsonable
             }
         }
 
-        // Fill missing fields which are now in fillable but not in record, may be added later once record created
-        $missingFields = array_diff($this->getFillable(), array_keys($attributes));
-        foreach ($missingFields as $field) {
-            $this->setAttribute($field, null);
+        // Fill fields with default values if not present in attributes
+        foreach ($this->getDefault() as $key => $value) {
+            if (!isset($this->attributes[$key])) {
+                $this->setAttribute($key, $value);
+            }
         }
 
         return $this;

@@ -84,13 +84,22 @@ class Relation
     /**
      * Removing the relation
      */
-    public function detach()
+    public function detach($ids = null)
     {
         // Removing relation
-        $this->current->getConnection()->zrem(
-            $this->getRelationKey(),
-            $this->related->{$this->getLocalKey()}
-        );
+        if (is_null($ids)) {
+            $this->current->getConnection()->del(
+                $this->getRelationKey()
+            );
+        }
+
+        $ids = is_array($ids) ? $ids : [$ids];
+        foreach ($ids as $id) {
+            $this->current->getConnection()->zrem(
+                $this->getRelationKey(),
+                $id
+            );
+        }
     }
 
     /**
